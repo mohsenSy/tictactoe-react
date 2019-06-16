@@ -12,22 +12,36 @@ class Game extends React.Component {
       }],
       xIsNext: true,
       stepNumber: 0,
+      done: false,
     };
   }
   handleClick(i) {
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
-    let xIsNext = this.state.xIsNext;
-    if (xIsNext) {
-      squares[i] = 'X';
-      xIsNext = false;
+    if (!this.state.done) {
+      const history = this.state.history.slice(0, this.state.stepNumber + 1);
+      const current = history[history.length - 1];
+      const squares = current.squares.slice();
+      let xIsNext = this.state.xIsNext;
+      if (xIsNext) {
+        squares[i] = 'X';
+        xIsNext = false;
+      }
+      else {
+        squares[i] = 'O';
+        xIsNext = true;
+      }
+      if (calculateWinner(squares)) {
+          this.setState({history: history.concat([{ squares: squares}]), stepNumber: history.length,  xIsNext: xIsNext, done: true});
+        }
+        else {
+          const count = squares.filter((x) => {return x !== null}).length;
+          if (count === 9) {
+            this.setState({history: history.concat([{ squares: squares}]), stepNumber: history.length,  xIsNext: xIsNext, done: true});
+          }
+          else {
+            this.setState({history: history.concat([{ squares: squares}]), stepNumber: history.length,  xIsNext: xIsNext, done: false});
+          }
+        }
     }
-    else {
-      squares[i] = 'O';
-      xIsNext = true;
-    }
-    this.setState({history: history.concat([{ squares: squares}]), stepNumber: history.length,  xIsNext: xIsNext});
   }
   jumpTo(step) {
     this.setState({
@@ -40,19 +54,28 @@ class Game extends React.Component {
     const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares)
     let status;
-    if (winner) {
-      status = "Winner: " + winner;
-    }
-    else {
-      status = "Next player: " + (this.state.xIsNext ? 'X' : 'O');
-    }
+if (winner) {
+  status = "Winner: " + winner;
+}
+else {
+  const count = current.squares.filter((x) => {return x !== null}).length;
+  if (count === 9) {
+    status = "This is a draw";
+  }
+  else {
+    status = "Next player: " + (this.state.xIsNext ? 'X' : 'O');
+  }
+}
     const moves = history.map((step, move) => {
       const desc = move ? "Go to move #" + move : "Go to start";
-      return (
-        <li key={move}>
-          <button className="btn btn-primary step" onClick={() => this.jumpTo(move)}>{desc}</button>
-        </li>
-      )
+      if (move <= this.state.stepNumber) {
+        return (
+          <li key={move}>
+            <button className="btn btn-primary step" onClick={() => this.jumpTo(move)}>{desc}</button>
+          </li>
+        )
+      }
+      return null;
     })
     return (
       <div className="container">
